@@ -1,0 +1,4 @@
+flwr-ecg-env/
+__pycache__/
+*.egg-info/
+.DS_Store

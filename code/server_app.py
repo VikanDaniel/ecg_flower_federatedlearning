@@ -1,0 +1,3 @@
+app = ServerApp()
+
+@app.main()

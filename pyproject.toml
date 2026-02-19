@@ -1,0 +1,27 @@
+[project]
+name = "ecg-federatedlearning"
+version = "0.1.0"
+description = "Federated Learning with Flower.ai"
+dependencies = [
+    "flwr[simulation]>=1.13.0",
+    "torch==2.4.1",
+    "wfdb>=3.4.1",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.5.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.flwr.app]
+modules = { server = "code:server_app:app", client = "code:client_app:app" }
+
+[tool.flwr.federated]
+num-server-rounds = 3
+
+[tool.flwr.app.config]
+batch-size = 32
+local-epochs = 1
+learning-rate = 0.01
+num-partitions = 2
