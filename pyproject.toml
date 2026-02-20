@@ -14,8 +14,14 @@ dependencies = [
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["."]                 
+include = ["code*"] 
+exclude = ["data*", "flwr-ecg-env*"]          
+
 [tool.flwr.app]
-modules = { server = "code:server_app:app", client = "code:client_app:app" }
+modules = { server = "code.server_app:app", client = "code.client_app:app" }
+
 
 [tool.flwr.federated]
 num-server-rounds = 3
