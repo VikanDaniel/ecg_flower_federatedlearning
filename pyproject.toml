@@ -23,7 +23,6 @@ exclude = ["data*", "flwr-ecg-env*"]
 [tool.flwr.app]
 modules = { server = "code.server_app:app", client = "code.client_app:app" }
 
-
 [tool.flwr.federated]
 num-server-rounds = 3
 
