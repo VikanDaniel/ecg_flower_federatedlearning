@@ -17,17 +17,22 @@ build-backend = "setuptools.build_meta"
 #To exclude data-folder and connect flower to the code-files in the data folder
 [tool.setuptools.packages.find]
 where = ["."]                 
-include = ["code*"] 
+include = ["ecg_code*"] 
 exclude = ["data*", "flwr-ecg-env*"]          
 
 [tool.flwr.app]
-modules = { server = "code.server_app:app", client = "code.client_app:app" }
+publisher = "danie"
 
-[tool.flwr.federated]
-num-server-rounds = 3
+[tool.flwr.app.components]
+serverapp = "ecg_code.server_app:app"
+clientapp = "ecg_code.client_app:app"
 
 [tool.flwr.app.config]
+num-server-rounds = 3
 batch-size = 32
 local-epochs = 1
 learning-rate = 0.01
 num-partitions = 2
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 2
