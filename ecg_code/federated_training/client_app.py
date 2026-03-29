@@ -3,7 +3,7 @@ from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
 
 # Use correct import from task
-from ecg_code.task import Net, load_data, train, test
+from ecg_code.federated_training.task import Net, load_data, train, test
 
 class FlowerClient(NumPyClient):
     def __init__(self, partition_id, net, trainloader, testloader):
@@ -32,8 +32,8 @@ class FlowerClient(NumPyClient):
     def evaluate(self, parameters, config):
         print(f"[Client {self.partition_id}] Evaluating...")
         self.set_parameters(parameters)
-        loss, accuracy = test(self.net, self.testloader, device=self.device)
-        return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
+        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device)
+        return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy), "f1_score": float(f1), "roc_auc": float(auc)}
 
 
 def client_fn(context: Context):

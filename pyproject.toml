@@ -24,8 +24,8 @@ exclude = ["data*", "flwr-ecg-env*"]
 publisher = "danie"
 
 [tool.flwr.app.components]
-serverapp = "ecg_code.server_app:app"
-clientapp = "ecg_code.client_app:app"
+serverapp = "ecg_code.federated_training.server_app:app"
+clientapp = "ecg_code.federated_training.client_app:app"
 
 [tool.flwr.app.config]
 num-server-rounds = 3

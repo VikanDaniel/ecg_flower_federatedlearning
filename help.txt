@@ -1,3 +1,0 @@
-source flwr-ecg-env/bin/activate
-
-flower-simulation --app . --num-supernodes 2 --backend-config '{"client-resources": {"num-cpus": 16, "num-gpus": 0}}'
