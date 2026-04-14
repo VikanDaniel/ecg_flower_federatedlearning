@@ -1,5 +1,5 @@
 import torch
-from ecg_code.federated_training.task import Net, load_data, train, test # Imports the model and the functions to load data and train/test the model
+from ecg_code.federated_training.task_equal import Net, load_data, train, test # Imports the equal model
 
 # This is the centralized training (with individual datasets).
 # This is how most hospitals do it today.
@@ -13,7 +13,7 @@ def train_individual_model(client_id, rounds=20):
     
     print(f"Starting learning for client {client_id}")
     
-    # Load only data for this specific client
+    # Last inn kun data for denne spesifikke klienten
     print(f"Loading data for client {client_id}...")
     trainloader, testloader, num_examples = load_data(client_id)
     print(f"Training on {num_examples['trainset']} patients, testing on {num_examples['testset']} patients.")
@@ -25,10 +25,10 @@ def train_individual_model(client_id, rounds=20):
     # Train and evaluate (only on own data)
     for round in range(1, rounds + 1):
         print(f"\nRound {round}")
-        train(net, trainloader, optimizer, epochs=1, device=device)
+        train(net, trainloader, optimizer, epochs=20, device=device)
         
         if round == rounds:
-            loss, accuracy, f1, auc = test(net, testloader, device=device, save_path=f"iso_client{client_id}")
+            loss, accuracy, f1, auc = test(net, testloader, device=device, save_path=f"equal_iso_client{client_id}")
         else:
             loss, accuracy, f1, auc = test(net, testloader, device=device)
         

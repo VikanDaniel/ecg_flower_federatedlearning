@@ -3,7 +3,7 @@ from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
 
 # Use correct import from task
-from ecg_code.federated_training.task import Net, load_data, train, test
+from ecg_code.federated_training.task_equal import Net, load_data, train, test
 
 class FlowerClient(NumPyClient):
     def __init__(self, partition_id, net, trainloader, testloader):
@@ -25,12 +25,11 @@ class FlowerClient(NumPyClient):
         print(f"[Client {self.partition_id}] Training...")
         self.set_parameters(parameters)
         optimizer = torch.optim.Adam(self.net.parameters(), lr=0.001)
-        # Prevent Weight Divergence (Client Drift)
-        # Client 0 has 273 gradient steps per 1 epoch. Client 1 has ~9 gradient steps per 1 epoch.
-        # To make their brains mathematically compatible for the 50/50 Unweighted FedAvg, 
-        # both hospitals MUST take the same number of gradient steps before merging!
-        # Therefore: 30 epochs * 9 steps = 270 steps!
-        local_epochs = 1 if self.partition_id == 0 else 30
+        # CRITICAL FIX FOR SMALL DATASETS: Underfitting!
+        # Siden begge datasettene er mikroskopiske (362), blir det bare ~11 gradient steps per epoke.
+        # Hvis vi bare trener 1 epoke, lærer de ingenting før de deler vekter! 
+        # Begge MÅ skrus opp til 20 for å bli en verdig kamp.
+        local_epochs = 20
         
         train(self.net, self.trainloader, optimizer, epochs=local_epochs, device=self.device)
         # Return 1 instead of dataset size to enforce Unweighted FedAvg (50/50 Voting Power)
@@ -39,7 +38,7 @@ class FlowerClient(NumPyClient):
     def evaluate(self, parameters, config):
         print(f"[Client {self.partition_id}] Evaluating...")
         self.set_parameters(parameters)
-        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device, save_path=f"fl_client{self.partition_id}")
+        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device, save_path=f"equal_fl_client{self.partition_id}")
         return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy), "f1_score": float(f1), "roc_auc": float(auc)}
 
 

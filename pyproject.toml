@@ -28,7 +28,7 @@ serverapp = "ecg_code.federated_training.server_app:app"
 clientapp = "ecg_code.federated_training.client_app:app"
 
 [tool.flwr.app.config]
-num-server-rounds = 3
+num-server-rounds = 20
 batch-size = 32
 local-epochs = 1
 learning-rate = 0.01

@@ -3,3 +3,8 @@ __pycache__/
 *.egg-info/
 .DS_Store
 .venv/
+*.png
+*.jpg
+*.jpeg
+*.npy
+

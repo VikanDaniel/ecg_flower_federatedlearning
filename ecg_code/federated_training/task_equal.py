@@ -188,6 +188,9 @@ def load_and_filter_ptbxl_metadata(data_path):
     # Put together and shuffle
     Y_balanced = pd.concat([Y_mi, Y_normal]).sample(frac=1, random_state=SEED)
     
+    print("\n!!! EXTREME ABLATION STUDY: Limiting PTB-XL to 362 patients to match PTB-DB !!!")
+    Y_balanced = Y_balanced.sample(n=362, random_state=SEED)
+        
     return Y_balanced
 
 def load_raw_data_ptbxl(df, data_path):

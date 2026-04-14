@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import ConcatDataset, DataLoader
-from ecg_code.federated_training.task import Net, load_data, train, test # Imports the model and the functions to load data and train/test the model
+from ecg_code.federated_training.task_equal import Net, load_data, train, test # Imports the equalized model and the functions
 
 
 # This is the centralized training (with combined datasets)
@@ -44,13 +44,13 @@ def main():
         print(f"\nRound: {round} ...")
         
         # Running training
-        train(net, trainloader, optimizer, epochs=1, device=device)
+        train(net, trainloader, optimizer, epochs=20, device=device)
         
         # Evaluate
         if round == rounds:
             # Apples-to-Apples Testing: Centralized MUST take the exact same 73-patient exam as the other models!
-            test(net, testloader_0, device=device, save_path="cent_client0")
-            loss, accuracy, f1, auc = test(net, testloader_1, device=device, save_path="cent_client1")
+            test(net, testloader_0, device=device, save_path="equal_cent_client0")
+            loss, accuracy, f1, auc = test(net, testloader_1, device=device, save_path="equal_cent_client1")
         else:
             loss, accuracy, f1, auc = test(net, testloader, device=device)
         
