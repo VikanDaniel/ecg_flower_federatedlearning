@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 # Seed for reproducibility
@@ -131,8 +131,16 @@ def test(net, testloader, device, save_path=None):
         auc = 0.5
         
     if save_path is not None:
-        np.save(f"{save_path}_labels.npy", np.array(all_labels))
-        np.save(f"{save_path}_probs.npy", np.array(all_probs))
+        labels_file = f"{save_path}_labels.npy"
+        probs_file = f"{save_path}_probs.npy"
+        if os.path.exists(labels_file) and os.path.exists(probs_file):
+            exist_labels = np.load(labels_file)
+            exist_probs = np.load(probs_file)
+            np.save(labels_file, np.concatenate((exist_labels, np.array(all_labels))))
+            np.save(probs_file, np.concatenate((exist_probs, np.array(all_probs))))
+        else:
+            np.save(labels_file, np.array(all_labels))
+            np.save(probs_file, np.array(all_probs))
     
     return loss, accuracy, f1, auc
 
@@ -305,8 +313,18 @@ def load_data(partition_id):
     else:
         raise ValueError(f"Unknown partition_id: {partition_id}")
         
+    fold_idx_str = os.environ.get("FOLD_IDX", None)
+    
     # Split into train/validation
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
+    if fold_idx_str is not None:
+        fold_idx = int(fold_idx_str)
+        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+        splits = list(skf.split(X, y))
+        train_idx, test_idx = splits[fold_idx]
+        X_train, X_test = X[train_idx], X[test_idx]
+        y_train, y_test = y[train_idx], y[test_idx]
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
     
     # Create PyTorch datasets
     trainset = TensorDataset(torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.long))

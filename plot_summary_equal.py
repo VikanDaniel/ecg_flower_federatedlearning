@@ -51,23 +51,23 @@ def draw_graph(experiments, title, filename):
 
 def main():
     print("==================================================")
-    print(" GENERATING FINAL RESEARCH SUMMARY GRAPH...")
+    print(" GENERATING FINAL RESEARCH SUMMARY GRAPH (EQUAL SIZE)...")
     print("==================================================")
     
     # The 6 Most Important Findings (The Story of the Thesis)
     summary_impact = [
-        # --- PTB-XL (Massive Hospital) ---
-        {"name": "XL: Centralized", "prefix": "cent_client0", "color": "#1f77b4", "linestyle": "-"},
-        {"name": "XL: Federated", "prefix": "fl_client0", "color": "black", "linestyle": "--"},
-        {"name": "XL: Isolated", "prefix": "iso_client0", "color": "#1f77b4", "linestyle": ":"},
+        # --- PTB-XL (Equalized Hospital Size) ---
+        {"name": "EQUAL-XL: Centralized", "prefix": "equal_cent_client0", "color": "#1f77b4", "linestyle": "-"},
+        {"name": "EQUAL-XL: Federated", "prefix": "equal_fl_client0", "color": "black", "linestyle": "--"},
+        {"name": "EQUAL-XL: Isolated", "prefix": "equal_iso_client0", "color": "#1f77b4", "linestyle": ":"},
         
         # --- PTB-DB (Small Hospital) ---
-        {"name": "DB: Federated", "prefix": "fl_client1", "color": "#d62728", "linestyle": "-"},
-        {"name": "DB: Centralized", "prefix": "cent_client1", "color": "#ff7f0e", "linestyle": "-"},
-        {"name": "DB: Isolated", "prefix": "iso_client1", "color": "#d62728", "linestyle": ":"}
+        {"name": "EQUAL-DB: Federated", "prefix": "equal_fl_client1", "color": "#d62728", "linestyle": "-"},
+        {"name": "EQUAL-DB: Centralized", "prefix": "equal_cent_client1", "color": "#ff7f0e", "linestyle": "-"},
+        {"name": "EQUAL-DB: Isolated", "prefix": "equal_iso_client1", "color": "#d62728", "linestyle": ":"}
     ]
     
-    draw_graph(summary_impact, "Federated vs. Centralized vs. Isolated", "Executive_Summary_Benchmark.png")
+    draw_graph(summary_impact, "EQUAL Dataset Ablation", "Executive_Summary_Equal_Benchmark.png")
 
 if __name__ == "__main__":
     main()

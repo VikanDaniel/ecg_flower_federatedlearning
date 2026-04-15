@@ -36,8 +36,8 @@ def main():
     net = Net().to(device)
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     
-    # Train - 20 Rounds for proper evaluation turnaround
-    rounds = 20 
+    # Train - 10 Rounds for proper evaluation turnaround
+    rounds = 10 
     
     print("\nStarting training and evaluation...")
     for round in range(1, rounds + 1):

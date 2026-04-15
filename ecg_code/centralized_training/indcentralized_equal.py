@@ -6,7 +6,7 @@ from ecg_code.federated_training.task_equal import Net, load_data, train, test #
 # One dataset per hospital. No sharing of data or models.
 # Is expected to have the worst results.
 
-def train_individual_model(client_id, rounds=20):
+def train_individual_model(client_id, rounds=10):
     # Client 0: PTB-XL
     # Client 1: PTB-DB
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,11 +44,11 @@ def main():
     
     # Running independent training for Client 0 (PTB-XL)
     print("Loading PTB-XL (Client 0)")
-    train_individual_model(client_id=0, rounds=20)
+    train_individual_model(client_id=0, rounds=10)
     
     # Running independent training for Client 1 (PTBDB)
     print("Loading PTB-DB (Client 1)")
-    train_individual_model(client_id=1, rounds=20)
+    train_individual_model(client_id=1, rounds=10)
     
     print("\nAll isolated training is complete!")
 

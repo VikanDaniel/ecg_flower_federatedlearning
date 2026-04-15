@@ -22,7 +22,7 @@ def weighted_average(metrics: list[tuple[int, Metrics]]) -> Metrics:
 
 def server_fn(context: Context):
     # Setup for central server
-    num_rounds = 20
+    num_rounds = 10
     
     # Configure to demand exactly 2 clients for fit and evaluate
     strategy = FedAvg(
