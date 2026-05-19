@@ -2,7 +2,6 @@ import torch
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
 
-# Use correct import from task
 from ecg_code.federated_training.task import Net, load_data, train, test
 
 class FlowerClient(NumPyClient):
@@ -25,21 +24,26 @@ class FlowerClient(NumPyClient):
         print(f"[Client {self.partition_id}] Training...")
         self.set_parameters(parameters)
         optimizer = torch.optim.Adam(self.net.parameters(), lr=0.001)
-        # Prevent Weight Divergence (Client Drift)
-        # Client 0 has 273 gradient steps per 1 epoch. Client 1 has ~9 gradient steps per 1 epoch.
-        # To make their brains mathematically compatible for the 50/50 Unweighted FedAvg, 
-        # both hospitals MUST take the same number of gradient steps before merging!
-        # Therefore: 30 epochs * 9 steps = 270 steps!
-        local_epochs = 1 if self.partition_id == 0 else 30
+
+        # Local epochs set to 3. 
+        local_epochs = 3
         
-        train(self.net, self.trainloader, optimizer, epochs=local_epochs, device=self.device)
-        # Return 1 instead of dataset size to enforce Unweighted FedAvg (50/50 Voting Power)
+        proximal_mu = config.get("proximal_mu", 0.0)
+        global_params = [val.detach().clone() for val in self.net.parameters()]
+        
+        train(self.net, self.trainloader, optimizer, epochs=local_epochs, device=self.device, proximal_mu=proximal_mu, global_params=global_params)
+        # Return 1 instead of dataset size to enforce Unweighted FedProx (50/50 Voting Power)
         return self.get_parameters(config={}), 1, {}
 
     def evaluate(self, parameters, config):
         print(f"[Client {self.partition_id}] Evaluating...")
         self.set_parameters(parameters)
-        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device, save_path=f"fl_client{self.partition_id}")
+        
+        save_path = None
+        if config.get("is_final_round", False):
+            save_path = f"fl_client{self.partition_id}"
+            
+        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device, save_path=save_path)
         return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy), "f1_score": float(f1), "roc_auc": float(auc)}
 
 

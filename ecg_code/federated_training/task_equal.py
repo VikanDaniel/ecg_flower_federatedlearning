@@ -5,6 +5,7 @@ import numpy as np
 import wfdb
 import random
 import scipy.signal
+import scipy.stats
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -89,7 +90,7 @@ class Net(nn.Module):
         x = self.fc(x)
         return x
 
-def train(net, trainloader, optimizer, epochs, device):
+def train(net, trainloader, optimizer, epochs, device, proximal_mu=0.0, global_params=None):
     criterion = torch.nn.CrossEntropyLoss()
     net.train()
     for _ in range(epochs):
@@ -98,6 +99,13 @@ def train(net, trainloader, optimizer, epochs, device):
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs, labels)
+            
+            if proximal_mu > 0.0 and global_params is not None:
+                proximal_term = 0.0
+                for local_weights, global_weights in zip(net.parameters(), global_params):
+                    proximal_term += torch.square(torch.linalg.norm(local_weights - global_weights))
+                loss += (proximal_mu / 2.0) * proximal_term
+                
             loss.backward()
             optimizer.step()
 
@@ -197,7 +205,10 @@ def load_and_filter_ptbxl_metadata(data_path):
     Y_balanced = pd.concat([Y_mi, Y_normal]).sample(frac=1, random_state=SEED)
     
     print("\n!!! EXTREME ABLATION STUDY: Limiting PTB-XL to 362 patients to match PTB-DB !!!")
-    Y_balanced = Y_balanced.sample(n=362, random_state=SEED)
+    # Stratified Sampling: Vi tvinger koden til å velge nøyaktig 181 syke og 181 friske!
+    Y_mi_sample = Y_balanced[Y_balanced['label'] == 1].sample(n=181, random_state=SEED)
+    Y_normal_sample = Y_balanced[Y_balanced['label'] == 0].sample(n=181, random_state=SEED)
+    Y_balanced = pd.concat([Y_mi_sample, Y_normal_sample]).sample(frac=1, random_state=SEED)
         
     return Y_balanced
 
@@ -206,6 +217,12 @@ def load_raw_data_ptbxl(df, data_path):
     for filename in df.filename_lr:
         full_path = os.path.join(data_path, filename)
         signal, meta = wfdb.rdsamp(full_path)
+        
+        # -- VOLTAGE HARMONIZATION --
+        # Standardiserer (Z-score) alle spenninger til mean 0 og std 1 for å tvinge datasettene på samme skala
+        signal = scipy.stats.zscore(signal, axis=0)
+        signal = np.nan_to_num(signal)
+        
         # Transpose so shape is (12, 1000) for PyTorch Conv1d
         data.append(signal.T)
     return np.array(data)
@@ -277,15 +294,27 @@ def load_raw_data_ptbdb(records, data_path):
         signal, meta = wfdb.rdsamp(full_path)
         
         signal_12_leads = signal[:, :12]
-        signal_100hz = signal_12_leads[::10, :]
         
+        # -- FREQUENCY HARMONIZATION --
+        fs = meta.get('fs', 1000)
+        target_fs = 100
+        if fs != target_fs:
+            signal_100hz = scipy.signal.resample_poly(signal_12_leads, up=target_fs, down=fs, axis=0)
+        else:
+            signal_100hz = signal_12_leads
+            
         if len(signal_100hz) >= expected_length:
-            signal_cropped = signal_100hz[:expected_length, :]
-            data.append(signal_cropped.T)
+            signal_final = signal_100hz[:expected_length, :]
         else:
             pad_width = expected_length - len(signal_100hz)
-            signal_padded = np.pad(signal_100hz, ((0, pad_width), (0, 0)), mode='constant')
-            data.append(signal_padded.T)
+            signal_final = np.pad(signal_100hz, ((0, pad_width), (0, 0)), mode='constant')
+
+        # -- VOLTAGE HARMONIZATION --
+        # Z-score etter klipping for å garantere perfekt harmonisering (Mean 0, Std 1)
+        signal_final = scipy.stats.zscore(signal_final, axis=0)
+        signal_final = np.nan_to_num(signal_final)
+        
+        data.append(signal_final.T)
             
     return np.array(data)
 

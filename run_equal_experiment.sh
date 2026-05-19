@@ -1,11 +1,8 @@
 #!/bin/bash
 
-echo "==========================================="
-echo " STARTER EQUAL SIZE (362 vs 362) EXPERIMENT WITH 5-FOLD CV"
-echo " This will force the massive PTB-XL to match the small hospital size"
-echo "==========================================="
+echo "Starting equal experiment..."
 
-echo "Cleaning up old prediction files to ensure fresh 5-Fold aggregation..."
+echo "Cleaning up old prediction files..."
 rm -vf *_labels.npy *_probs.npy
 echo ""
 
@@ -14,24 +11,16 @@ perl -pi -e 's/client_app:/client_app_equal:/g' pyproject.toml
 perl -pi -e 's/server_app:/server_app_equal:/g' pyproject.toml
 
 for FOLD_IDX in {0..4}; do
-    echo "==========================================="
-    echo " STARTING FOLD $FOLD_IDX / 4"
-    echo "==========================================="
+    echo "Starting fold $FOLD_IDX / 4"
     export FOLD_IDX=$FOLD_IDX
 
-    echo "-------------------------------------------"
-    echo " 1. Running Centralized AI (Absolute Ceiling)"
-    echo "-------------------------------------------"
+    echo "Running Centralized"
     python3 -m ecg_code.centralized_training.centralized_equal
 
-    echo "-------------------------------------------"
-    echo " 2. Running Isolated AI (Small Hospital Baseline)"
-    echo "-------------------------------------------"
+    echo "Running Isolated"
     python3 -m ecg_code.centralized_training.indcentralized_equal
 
-    echo "-------------------------------------------"
-    echo " 3. Running Federated AI (Flower Network)"
-    echo "-------------------------------------------"
+    echo "Running Federated"
     RAY_enable_metrics_collection=0 RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0 flower-simulation --app . --num-supernodes 2 --backend-config '{"client-resources": {"num-cpus": 6, "num-gpus": 0.0}}'
 done
 
@@ -39,7 +28,4 @@ done
 perl -pi -e 's/client_app_equal:/client_app:/g' pyproject.toml
 perl -pi -e 's/server_app_equal:/server_app:/g' pyproject.toml
 
-echo "==========================================="
-echo " 🎉 ABLATION STUDY COMPLETED! 🎉"
-echo " Run: python3 plot_equal_federated.py"
-echo "==========================================="
+echo "Completed all 5 folds for the equal experiment."

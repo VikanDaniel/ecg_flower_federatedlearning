@@ -2,7 +2,6 @@ import torch
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
 
-# Use correct import from task
 from ecg_code.federated_training.task_equal import Net, load_data, train, test
 
 class FlowerClient(NumPyClient):
@@ -25,20 +24,24 @@ class FlowerClient(NumPyClient):
         print(f"[Client {self.partition_id}] Training...")
         self.set_parameters(parameters)
         optimizer = torch.optim.Adam(self.net.parameters(), lr=0.001)
-        # CRITICAL FIX FOR SMALL DATASETS: Underfitting!
-        # Siden begge datasettene er mikroskopiske (362), blir det bare ~11 gradient steps per epoke.
-        # Hvis vi bare trener 1 epoke, lærer de ingenting før de deler vekter! 
-        # Begge MÅ skrus opp til 20 for å bli en verdig kamp.
-        local_epochs = 20
+        local_epochs = 3
         
-        train(self.net, self.trainloader, optimizer, epochs=local_epochs, device=self.device)
+        proximal_mu = config.get("proximal_mu", 0.0)
+        global_params = [val.detach().clone() for val in self.net.parameters()]
+        
+        train(self.net, self.trainloader, optimizer, epochs=local_epochs, device=self.device, proximal_mu=proximal_mu, global_params=global_params)
         # Return 1 instead of dataset size to enforce Unweighted FedAvg (50/50 Voting Power)
         return self.get_parameters(config={}), 1, {}
 
     def evaluate(self, parameters, config):
         print(f"[Client {self.partition_id}] Evaluating...")
         self.set_parameters(parameters)
-        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device, save_path=f"equal_fl_client{self.partition_id}")
+        
+        save_path = None
+        if config.get("is_final_round", False):
+            save_path = f"equal_fl_client{self.partition_id}"
+            
+        loss, accuracy, f1, auc = test(self.net, self.testloader, device=self.device, save_path=save_path)
         return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy), "f1_score": float(f1), "roc_auc": float(auc)}
 
 

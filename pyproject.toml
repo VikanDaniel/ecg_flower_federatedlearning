@@ -14,7 +14,6 @@ dependencies = [
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-#To exclude data-folder and connect flower to the code-files in the data folder
 [tool.setuptools.packages.find]
 where = ["."]                 
 include = ["ecg_code*"] 
@@ -24,8 +23,8 @@ exclude = ["data*", "flwr-ecg-env*"]
 publisher = "danie"
 
 [tool.flwr.app.components]
-serverapp = "ecg_code.federated_training.server_app_equal:app"
-clientapp = "ecg_code.federated_training.client_app_equal:app"
+serverapp = "ecg_code.federated_training.server_app:app"
+clientapp = "ecg_code.federated_training.client_app:app"
 
 [tool.flwr.app.config]
 num-server-rounds = 10

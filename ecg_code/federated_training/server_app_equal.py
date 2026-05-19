@@ -1,5 +1,5 @@
 from flwr.server import ServerApp, ServerConfig, ServerAppComponents
-from flwr.server.strategy import FedAvg
+from flwr.server.strategy import FedProx
 from flwr.common import Context, Metrics
 
 # Running the server for federated learning
@@ -24,14 +24,22 @@ def server_fn(context: Context):
     # Setup for central server
     num_rounds = 10
     
+    def evaluate_config(server_round: int):
+        return {"is_final_round": server_round == num_rounds}
+    
     # Configure to demand exactly 2 clients for fit and evaluate
-    strategy = FedAvg(
+    strategy = FedProx(
         fraction_fit=1.0,  
         fraction_evaluate=1.0,
         min_fit_clients=2,
         min_evaluate_clients=2,
         min_available_clients=2,
         evaluate_metrics_aggregation_fn=weighted_average,
+        on_evaluate_config_fn=evaluate_config,
+        proximal_mu=0.1,  # Added FedProx proximal term
+                          # proximal_mu says how much we trust the global model
+                          # if proximal_mu is 0 we dont trust the global model
+                          # if proximal_mu is 1 we trust the global model completely
     )
     
     config = ServerConfig(num_rounds=num_rounds)

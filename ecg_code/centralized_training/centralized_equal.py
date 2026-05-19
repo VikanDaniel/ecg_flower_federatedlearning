@@ -36,15 +36,15 @@ def main():
     net = Net().to(device)
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     
-    # Train - 10 Rounds for proper evaluation turnaround
+    # Train - 10 Rounds (matching Federated synchronization plan)
     rounds = 10 
     
     print("\nStarting training and evaluation...")
     for round in range(1, rounds + 1):
         print(f"\nRound: {round} ...")
         
-        # Running training
-        train(net, trainloader, optimizer, epochs=20, device=device)
+        # Running training (4 epochs per round = 200 total epochs)
+        train(net, trainloader, optimizer, epochs=4, device=device)
         
         # Evaluate
         if round == rounds:

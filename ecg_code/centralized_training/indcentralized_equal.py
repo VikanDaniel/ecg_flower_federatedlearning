@@ -25,7 +25,7 @@ def train_individual_model(client_id, rounds=10):
     # Train and evaluate (only on own data)
     for round in range(1, rounds + 1):
         print(f"\nRound {round}")
-        train(net, trainloader, optimizer, epochs=20, device=device)
+        train(net, trainloader, optimizer, epochs=4, device=device)
         
         if round == rounds:
             loss, accuracy, f1, auc = test(net, testloader, device=device, save_path=f"equal_iso_client{client_id}")
